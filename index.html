@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Análise do Financiamento</title>
+<style>
+:root{
+  --bg:#f7f5f1; --surface:#ffffff; --ink:#16181c; --ink-soft:#4a4f57;
+  --line:#ddd8cf; --good:#0f6b3f; --good-bg:#e7f4ec; --good-line:#9bcfb2;
+  --warn:#7a4b00; --warn-bg:#fdf3e0; --warn-line:#e8c785;
+  --info:#1d4e7a; --info-bg:#e6f0f8; --info-line:#9cc2de;
+  --accent:#2a1d48; --shadow:0 1px 3px rgba(0,0,0,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171b; --surface:#1e2127; --ink:#f0eee9; --ink-soft:#b3b8c0;
+    --line:#343941; --good:#6fd39b; --good-bg:#13301f; --good-line:#2c5f40;
+    --warn:#f3c268; --warn-bg:#332506; --warn-line:#6b5115;
+    --info:#8ec5ec; --info-bg:#10283a; --info-line:#2b5573;
+    --accent:#c3b2f0; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171b; --surface:#1e2127; --ink:#f0eee9; --ink-soft:#b3b8c0;
+  --line:#343941; --good:#6fd39b; --good-bg:#13301f; --good-line:#2c5f40;
+  --warn:#f3c268; --warn-bg:#332506; --warn-line:#6b5115;
+  --info:#8ec5ec; --info-bg:#10283a; --info-line:#2b5573;
+  --accent:#c3b2f0; --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:23px; line-height:1.6;
+}
+.wrap{max-width:900px; margin:0 auto; padding:36px 16px 80px}
+
+h1{font-size:40px; line-height:1.2; margin:0 0 8px; letter-spacing:-.01em}
+h2{font-size:30px; line-height:1.25; margin:56px 0 18px; letter-spacing:-.01em}
+h3{font-size:24px; line-height:1.3; margin:0 0 10px}
+p{margin:0 0 18px}
+.lede{font-size:23px; color:var(--ink-soft); margin:0 0 4px}
+.muted{color:var(--ink-soft)}
+small,.small{font-size:18px}
+
+.verdict{
+  background:var(--good-bg); border:2px solid var(--good-line);
+  border-radius:16px; padding:32px 28px; margin:26px 0 8px;
+}
+.verdict .kicker{
+  font-size:19px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--good); margin:0 0 10px;
+}
+.verdict h1{color:var(--good); font-size:42px; margin:0 0 20px}
+.bignum{
+  font-size:76px; font-weight:800; line-height:1; color:var(--good);
+  letter-spacing:-.03em; display:block;
+}
+.bignum-sub{font-size:22px; font-weight:600; color:var(--good); display:block; margin-top:8px}
+
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:26px 24px; margin:0 0 20px; box-shadow:var(--shadow);
+}
+.card h3{color:var(--accent)}
+.card p:last-child,.card ul:last-child,.card ol:last-child,.card div:last-child{margin-bottom:0}
+
+.alert{background:var(--warn-bg); border:2px solid var(--warn-line)}
+.alert h3{color:var(--warn)}
+.alert .tag{
+  display:inline-block; font-size:17px; font-weight:700; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--warn); margin:0 0 8px;
+}
+.note{background:var(--info-bg); border:2px solid var(--info-line)}
+.note h3{color:var(--info)}
+.note .tag{
+  display:inline-block; font-size:17px; font-weight:700; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--info); margin:0 0 8px;
+}
+
+.tbl-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 0 20px}
+table{border-collapse:collapse; width:100%; font-size:21px}
+caption{text-align:left; font-size:19px; color:var(--ink-soft); padding:0 0 12px}
+th,td{padding:13px 12px; text-align:left; border-bottom:1px solid var(--line)}
+th{font-weight:700; font-size:19px; color:var(--ink-soft); letter-spacing:.03em}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+tr.hl td{background:var(--good-bg); font-weight:700; color:var(--good)}
+tr.hl td:first-child{border-radius:8px 0 0 8px}
+tr.hl td:last-child{border-radius:0 8px 8px 0}
+tbody tr:last-child td{border-bottom:none}
+
+.meter{margin:22px 0 10px}
+.meter-track{
+  position:relative; height:52px; background:var(--bg);
+  border:1px solid var(--line); border-radius:10px; overflow:hidden;
+}
+.meter-fill{
+  position:absolute; inset:0 auto 0 0; width:94.7%;
+  background:linear-gradient(90deg,#0f6b3f,#2e9c66); border-radius:9px 0 0 9px;
+}
+.meter-labels{display:flex; justify-content:space-between; font-size:18px; color:var(--ink-soft); margin-top:10px}
+
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin:0 0 22px}
+.stat{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px 16px}
+.stat .k{font-size:18px; color:var(--ink-soft); display:block; margin-bottom:6px}
+.stat .v{font-size:30px; font-weight:750; letter-spacing:-.02em; display:block; line-height:1.15}
+
+ul,ol{margin:0 0 18px; padding-left:26px}
+li{margin:0 0 12px}
+li::marker{color:var(--accent); font-weight:700}
+strong{font-weight:750}
+.strike{text-decoration:line-through; color:var(--ink-soft)}
+hr{border:none; border-top:1px solid var(--line); margin:56px 0 0}
+footer{font-size:18px; color:var(--ink-soft); padding-top:24px}
+footer p{margin:0 0 10px}
+
+@media (max-width:600px){
+  body{font-size:22px}
+  .wrap{padding:26px 16px 64px}
+  h1,.verdict h1{font-size:33px}
+  h2{font-size:27px; margin-top:44px}
+  .bignum{font-size:58px}
+  .verdict{padding:26px 20px}
+  .card{padding:22px 18px}
+  table{font-size:20px}
+  th,td{padding:12px 9px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="lede">Simulação CAIXA de 30 de setembro de 2026</p>
+  <p class="lede"><strong>Minha Casa Minha Vida</strong> · construção · São João del Rei, MG</p>
+
+  <section class="verdict">
+    <p class="kicker">Resposta direta</p>
+    <h1>Os juros não são abusivos</h1>
+    <span class="bignum">7,66%</span>
+    <span class="bignum-sub">ao ano · contra 10,3% a 12,0% no mercado</span>
+    <p style="margin-top:22px; margin-bottom:0">É dinheiro subsidiado do FGTS, uma das taxas
+    mais baratas disponíveis no Brasil hoje. <strong>E essa taxa não muda se o valor do
+    imóvel mudar</strong>, porque ela depende da faixa de renda, não do preço da casa</p>
+  </section>
+
+  <h2>Antes de tudo: esta simulação vai ser refeita</h2>
+
+  <div class="card note">
+    <span class="tag">Leia isto primeiro</span>
+    <h3>O valor do imóvel está errado no papel</h3>
+    <p>O próprio consultor avisou no áudio que colocou R$ 210.000 por engano e que o valor
+    real é outro. Então <strong>as parcelas desta simulação vão mudar</strong></p>
+    <p style="margin-bottom:0">O que <strong>não muda</strong>: a taxa de 7,66%, o prazo de
+    356 meses e o teto de quanto a renda aguenta. É por isso que esta análise continua
+    valendo, e é o que interessa levar para a conversa</p>
+  </div>
+
+  <h2>Por que a taxa é boa</h2>
+
+  <div class="tbl-scroll">
+  <table>
+    <caption>Taxa ao ano, para financiamento de imóvel · setembro de 2026</caption>
+    <thead>
+      <tr><th>Onde</th><th class="num">Taxa ao ano</th></tr>
+    </thead>
+    <tbody>
+      <tr class="hl"><td>Esta proposta</td><td class="num">7,66%</td></tr>
+      <tr><td>Referência Minha Casa Minha Vida, Faixa 3</td><td class="num">8,16%</td></tr>
+      <tr><td>CAIXA fora do programa</td><td class="num">10,26%</td></tr>
+      <tr><td>Bradesco</td><td class="num">11,45%</td></tr>
+      <tr><td>Itaú</td><td class="num">11,99%</td></tr>
+      <tr><td>Selic, o juro básico do país</td><td class="num">13,75%</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="card">
+    <h3>O que isso significa</h3>
+    <p>A taxa está <strong>quase 6 pontos abaixo da Selic</strong>. Nenhum banco empresta
+    abaixo do juro básico com dinheiro próprio, então isso só existe porque o recurso vem
+    do FGTS e é subsidiado</p>
+    <p style="margin-bottom:0">Dois motivos para ter caído nessa faixa: a renda de
+    R$ 5.800 entra na <strong>Faixa 3</strong> do programa, e ser <strong>cotista do FGTS
+    com mais de 3 anos</strong> dá desconto adicional. Por isso 7,66% e não os 8,16%
+    da tabela padrão</p>
+  </div>
+
+  <h2>Cabe no orçamento?</h2>
+
+  <div class="card">
+    <h3>Sim, mas quase no limite</h3>
+
+    <div class="meter">
+      <div class="meter-track"><div class="meter-fill"></div></div>
+      <div class="meter-labels">
+        <span>parcela: 28,4% da renda</span>
+        <span>teto CAIXA: 30%</span>
+      </div>
+    </div>
+
+    <div class="tbl-scroll" style="margin-top:22px">
+    <table>
+      <tbody>
+        <tr><td>Renda bruta familiar</td><td class="num">R$ 5.800,00</td></tr>
+        <tr><td>1ª parcela, já com seguros e taxa</td><td class="num">R$ 1.644,36</td></tr>
+        <tr><td>Quanto compromete da renda</td><td class="num">28,4%</td></tr>
+        <tr><td>Limite que a CAIXA aceita</td><td class="num">30,0%</td></tr>
+        <tr class="hl"><td>Folga até o limite</td><td class="num">R$ 95,64</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p style="margin-bottom:0">Essa folga de R$ 95 é o dado mais importante da conversa
+    sobre aumentar o valor do imóvel</p>
+  </div>
+
+  <h2>Até onde dá para aumentar o imóvel</h2>
+
+  <div class="card">
+    <h3>Com a renda atual e a entrada saindo do bolso</h3>
+    <p>A conta é a folga acima. Só existe espaço para <strong>R$ 95 a mais</strong> de
+    parcela, o que dá:</p>
+    <div class="tbl-scroll">
+    <table>
+      <tbody>
+        <tr><td>Imóvel máximo</td><td class="num"><strong>R$ 222.400</strong></td></tr>
+        <tr><td>Financiamento</td><td class="num">R$ 177.900</td></tr>
+        <tr><td>Entrada necessária</td><td class="num">R$ 44.500</td></tr>
+        <tr><td>Parcela resultante</td><td class="num">R$ 1.740,00</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-bottom:0">Ou seja: <strong>sem mexer em mais nada, o teto é por volta
+    de R$ 222 mil</strong>. Acima disso a CAIXA reprova por comprometimento de renda,
+    por mais que o imóvel valha a pena</p>
+  </div>
+
+  <div class="card">
+    <h3>Com o FGTS reforçando a entrada</h3>
+    <p>Aqui está a saída que o consultor mencionou no áudio. O FGTS não entra como parcela,
+    entra como entrada. Isso significa que <strong>cada R$ 10 mil de FGTS vira R$ 10 mil a
+    mais de imóvel, sem aumentar a parcela</strong></p>
+    <div class="tbl-scroll">
+    <table>
+      <caption>Todos os cenários mantendo a parcela no teto de R$ 1.740</caption>
+      <thead>
+        <tr><th>FGTS na entrada</th><th class="num">Entrada total</th><th class="num">Imóvel possível</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Nenhum</td><td class="num">R$ 44.500</td><td class="num">R$ 222.400</td></tr>
+        <tr><td>R$ 20.000</td><td class="num">R$ 62.000</td><td class="num">R$ 239.800</td></tr>
+        <tr class="hl"><td>R$ 30.000</td><td class="num">R$ 72.000</td><td class="num">R$ 249.700</td></tr>
+        <tr><td>R$ 40.000</td><td class="num">R$ 82.000</td><td class="num">R$ 259.600</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p><strong>Saber o saldo exato do FGTS antes da reunião é a informação mais valiosa
+    que ele pode levar</strong>. É ela que define o teto real</p>
+    <p style="margin-bottom:0" class="small muted">Atenção: todos esses cenários deixam a
+    parcela no teto de 30%, ou seja, com zero folga no orçamento. Chegar no limite máximo
+    raramente é boa ideia, mesmo quando o banco aprova</p>
+  </div>
+
+  <h2>Uma correção sobre o que foi dito</h2>
+
+  <div class="card note">
+    <span class="tag">Atenção</span>
+    <h3>A parcela não é fixa</h3>
+    <p>No áudio, a parcela de R$ 1.644 foi descrita como <span class="strike">fixa</span>.
+    O documento diz outra coisa: o sistema é <strong>SAC</strong>, em que a parcela
+    <strong>diminui todo mês</strong></p>
+    <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Momento</th><th class="num">Parcela</th></tr></thead>
+      <tbody>
+        <tr><td>Início</td><td class="num">R$ 1.644</td></tr>
+        <tr><td>Em 10 anos</td><td class="num">R$ 1.211</td></tr>
+        <tr><td>Em 20 anos</td><td class="num">R$ 849</td></tr>
+        <tr><td>Última</td><td class="num">R$ 500</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-bottom:0">Isso é <strong>a favor dele</strong>, e é o formato certo
+    para este caso. Mas vale confirmar na reunião, porque muda bastante o planejamento de
+    longo prazo</p>
+  </div>
+
+  <h2>3 pontos que o papel não conta</h2>
+
+  <div class="card alert">
+    <span class="tag">Ponto 1 · o mais importante</span>
+    <h3>A TR ficou de fora da conta</h3>
+    <p>O documento mostra <strong>R$ 359.423</strong> como total das parcelas, mas avisa em
+    letra miúda que o cálculo <strong>não inclui a correção do saldo devedor</strong>. Essa
+    correção é a TR, e ela não está zerada: está em 0,17% ao mês, porque a Selic está alta</p>
+
+    <div class="tbl-scroll">
+    <table>
+      <caption>O que acontece com o total conforme a TR</caption>
+      <thead><tr><th>Cenário da TR</th><th class="num">Total pago</th><th class="num">Última parcela</th></tr></thead>
+      <tbody>
+        <tr><td>Zerada, como no papel</td><td class="num">R$ 359.000</td><td class="num">R$ 500</td></tr>
+        <tr><td>Baixa, 0,05% ao mês</td><td class="num">R$ 387.000</td><td class="num">—</td></tr>
+        <tr><td>Média, 0,10% ao mês</td><td class="num">R$ 417.000</td><td class="num">—</td></tr>
+        <tr><td>Como hoje, 0,17% ao mês</td><td class="num">R$ 465.000</td><td class="num">R$ 894</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p style="margin-bottom:0">Sendo justo: a TR só corre quando a Selic está alta, e ela
+    ficou zerada de 2018 a 2021. O cenário realista para 30 anos é o do meio, algo entre
+    <strong>R$ 387 mil e R$ 417 mil</strong>. O ponto é que R$ 359 mil é o piso otimista,
+    não a previsão</p>
+  </div>
+
+  <div class="card alert">
+    <span class="tag">Ponto 2</span>
+    <h3>O prazo já está no máximo que a idade permite</h3>
+    <p>No áudio foi dito que o prazo "foi reduzido" para 356 meses, sem explicar o motivo.
+    O motivo é a idade: a última parcela vence em <strong>maio de 2056</strong>, aos 80 anos
+    e 5 meses, e a CAIXA limita idade mais prazo em 80 anos e 6 meses</p>
+    <p style="margin-bottom:0">É por isso que são 356 meses e não 360 redondos. Na prática:
+    <strong>não existe alongar o prazo para aliviar a parcela</strong>. Essa carta já foi
+    jogada, e é mais um motivo para a folga de R$ 95 ser levada a sério</p>
+  </div>
+
+  <div class="card alert">
+    <span class="tag">Ponto 3</span>
+    <h3>O custo real é 9,77%, não 7,66%</h3>
+    <p>O <strong>CET</strong>, Custo Efetivo Total, é 9,77% ao ano. A diferença de quase
+    2 pontos são os seguros obrigatórios de morte e invalidez e de danos ao imóvel, mais
+    R$ 25 por mês de taxa de administração</p>
+    <p style="margin-bottom:0">Isso é normal e continua barato. Só vale saber que, ao
+    comparar com outro banco, o número honesto é o CET dos dois, nunca o juro anunciado</p>
+  </div>
+
+  <h2>O que levar para a reunião</h2>
+
+  <div class="card">
+    <ol style="margin-bottom:0">
+      <li><strong>O saldo exato do FGTS</strong>. É o número que define até onde dá para
+      aumentar o imóvel. Sem ele, a conversa fica no achismo</li>
+      <li><strong>Confirmar que a parcela é decrescente, não fixa</strong>, e pedir a nova
+      simulação já com o valor certo do imóvel</li>
+      <li><strong>Perguntar se dá para amortizar com FGTS a cada 2 anos</strong>, além de
+      usar na entrada. É a forma mais barata de reduzir juros ao longo do contrato</li>
+      <li><strong>Pedir para comparar com a linha de taxa fixa, sem TR</strong>. Paga-se um
+      juro um pouco maior em troca de zero surpresa. Comparar o CET das duas, não o juro
+      anunciado</li>
+      <li><strong>Perguntar como funciona a liberação da obra</strong>. É construção, não
+      imóvel pronto: o dinheiro sai por etapa, com vistoria. Vale saber o prazo e o que
+      acontece se o orçamento estourar</li>
+      <li><strong>Confirmar se o subsídio é só R$ 75,22</strong>. É o valor que aparece no
+      documento e parece baixo</li>
+    </ol>
+  </div>
+
+  <hr>
+  <footer>
+    <p>Análise feita sobre a simulação da CAIXA gerada em 30/09/2026 e sobre o áudio do
+    consultor. Os valores de mercado citados são de setembro de 2026 e mudam com o tempo</p>
+    <p>As projeções de TR e os cenários de FGTS são estimativas de cenário, não previsão.
+    A contratação ainda depende da análise de crédito da CAIXA</p>
+    <p>Documento de apoio para a decisão, não é recomendação de investimento</p>
+  </footer>
+
+</div>
+</body>
+</html>
